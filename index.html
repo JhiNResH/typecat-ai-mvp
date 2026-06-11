@@ -1,0 +1,594 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>TypeCat AI — Desktop Companion MVP</title>
+  <style>
+    :root {
+      --bg: #f4efe7;
+      --ink: #261f1a;
+      --muted: #746b62;
+      --panel: #fffaf2;
+      --line: #ded2c3;
+      --cat: #2a241f;
+      --cat-soft: #40362f;
+      --accent: #ff8a65;
+      --accent-2: #f8cf5a;
+      --good: #7d9b76;
+      --shadow: 0 24px 80px rgba(38, 31, 26, 0.14);
+    }
+
+    * { box-sizing: border-box; }
+    html, body { height: 100%; }
+    body {
+      margin: 0;
+      color: var(--ink);
+      background:
+        radial-gradient(circle at 20% 12%, rgba(255, 138, 101, 0.18), transparent 34%),
+        radial-gradient(circle at 88% 10%, rgba(248, 207, 90, 0.25), transparent 32%),
+        linear-gradient(135deg, #f8f1e7 0%, #efe5d7 100%);
+      font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      overflow: hidden;
+    }
+
+    button, textarea, input { font: inherit; }
+
+    .app {
+      min-height: 100%;
+      display: grid;
+      grid-template-columns: minmax(320px, 0.78fr) minmax(520px, 1.22fr);
+      gap: 22px;
+      padding: 22px;
+    }
+
+    .card {
+      border: 1px solid rgba(38, 31, 26, 0.12);
+      background: rgba(255, 250, 242, 0.82);
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(18px);
+    }
+
+    .brief {
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      padding: 28px;
+      border-radius: 28px;
+      min-height: calc(100vh - 44px);
+    }
+
+    .eyebrow {
+      margin: 0;
+      font-size: 12px;
+      font-weight: 900;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+      color: var(--muted);
+    }
+
+    h1 {
+      margin: 18px 0 0;
+      font-family: ui-serif, Georgia, Cambria, "Times New Roman", serif;
+      font-size: clamp(52px, 7vw, 92px);
+      line-height: 0.88;
+      letter-spacing: -0.055em;
+      text-wrap: balance;
+    }
+
+    .subcopy {
+      max-width: 520px;
+      margin: 22px 0 0;
+      color: var(--muted);
+      font-size: 17px;
+      line-height: 1.65;
+    }
+
+    .promise-grid {
+      display: grid;
+      gap: 10px;
+      margin-top: 28px;
+    }
+
+    .promise {
+      border: 1px solid var(--line);
+      background: rgba(255, 255, 255, 0.45);
+      padding: 14px;
+      border-radius: 18px;
+    }
+    .promise strong { display: block; font-size: 14px; }
+    .promise span { display: block; color: var(--muted); font-size: 13px; line-height: 1.5; margin-top: 4px; }
+
+    .controls {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-top: 28px;
+    }
+
+    .btn {
+      border: 1px solid var(--ink);
+      background: var(--ink);
+      color: white;
+      min-height: 44px;
+      padding: 0 16px;
+      border-radius: 999px;
+      font-weight: 800;
+      cursor: pointer;
+      transition: transform 160ms ease, box-shadow 160ms ease, background 160ms ease;
+    }
+    .btn:hover { transform: translateY(-1px); box-shadow: 0 10px 24px rgba(38,31,26,.18); }
+    .btn.secondary { background: transparent; color: var(--ink); }
+
+    .workspace {
+      position: relative;
+      overflow: hidden;
+      border-radius: 28px;
+      min-height: calc(100vh - 44px);
+      display: grid;
+      grid-template-rows: auto 1fr auto;
+    }
+
+    .topbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 14px;
+      padding: 18px 20px;
+      border-bottom: 1px solid var(--line);
+    }
+
+    .status-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: var(--good);
+      box-shadow: 0 0 0 7px rgba(125, 155, 118, 0.18);
+    }
+
+    .metric-row { display: flex; align-items: center; gap: 16px; color: var(--muted); font-size: 13px; }
+    .metric-row strong { color: var(--ink); }
+
+    .screen {
+      position: relative;
+      display: grid;
+      grid-template-columns: 1fr 320px;
+      gap: 18px;
+      padding: 20px;
+      min-height: 0;
+    }
+
+    .editor-wrap {
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      min-height: 0;
+    }
+
+    .editor-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      padding: 14px 16px;
+      border: 1px solid var(--line);
+      border-bottom: 0;
+      border-radius: 18px 18px 0 0;
+      background: rgba(255,255,255,.42);
+    }
+
+    .editor {
+      resize: none;
+      width: 100%;
+      min-height: 430px;
+      height: 100%;
+      border: 1px solid var(--line);
+      border-radius: 0 0 18px 18px;
+      background: #fffdf8;
+      color: var(--ink);
+      padding: 22px;
+      font-size: 18px;
+      line-height: 1.65;
+      outline: none;
+    }
+    .editor:focus { border-color: rgba(255, 138, 101, 0.9); box-shadow: 0 0 0 4px rgba(255, 138, 101, 0.16); }
+
+    .ai-panel {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      min-height: 0;
+    }
+
+    .ai-card {
+      border: 1px solid var(--line);
+      border-radius: 20px;
+      background: rgba(255,255,255,.52);
+      padding: 16px;
+    }
+    .ai-card h3 { margin: 0; font-size: 14px; letter-spacing: .04em; text-transform: uppercase; }
+    .ai-card p { margin: 10px 0 0; color: var(--muted); font-size: 14px; line-height: 1.55; }
+    .ai-card ul { margin: 10px 0 0; padding-left: 18px; color: var(--muted); font-size: 14px; line-height: 1.55; }
+
+    .dock {
+      position: absolute;
+      left: 34px;
+      bottom: 72px;
+      z-index: 10;
+      width: min(370px, calc(100% - 68px));
+      pointer-events: none;
+    }
+
+    .bubble {
+      width: max-content;
+      max-width: 320px;
+      margin: 0 auto 10px;
+      border: 1px solid rgba(38,31,26,.16);
+      background: rgba(255,255,255,.9);
+      box-shadow: 0 16px 40px rgba(38,31,26,.12);
+      padding: 12px 14px;
+      border-radius: 18px 18px 18px 6px;
+      color: var(--ink);
+      font-size: 14px;
+      line-height: 1.35;
+      transform-origin: bottom left;
+      animation: bubble-in 240ms ease both;
+    }
+
+    .cat-stage {
+      height: 190px;
+      position: relative;
+      display: flex;
+      align-items: flex-end;
+      justify-content: center;
+    }
+
+    .cat-shadow {
+      position: absolute;
+      bottom: 2px;
+      width: 210px;
+      height: 28px;
+      border-radius: 999px;
+      background: rgba(38, 31, 26, .18);
+      filter: blur(6px);
+      transform: scaleX(.96);
+    }
+
+    .cat {
+      position: relative;
+      width: 176px;
+      height: 148px;
+      transform-origin: 50% 100%;
+      animation: idle-breathe 2200ms ease-in-out infinite;
+      pointer-events: auto;
+    }
+    .cat:hover { animation-duration: 1200ms; }
+    .cat.typing { animation: typing-bounce 380ms steps(2) infinite; }
+    .cat.thinking { animation: think-sway 1200ms ease-in-out infinite; }
+    .cat.excited { animation: excited-hop 520ms cubic-bezier(.2, .9, .3, 1) infinite; }
+    .cat.sleepy { animation: idle-breathe 3200ms ease-in-out infinite; filter: saturate(.78); }
+    .cat.sleepy .eye { height: 4px; transform: translateY(7px); }
+    .cat.sleepy .tail { animation-duration: 4600ms; opacity: .88; }
+
+    .body {
+      position: absolute;
+      left: 28px;
+      bottom: 8px;
+      width: 120px;
+      height: 94px;
+      background: var(--cat);
+      border-radius: 42px 48px 36px 36px;
+      box-shadow: inset -16px -10px 0 rgba(255,255,255,.05);
+    }
+
+    .head {
+      position: absolute;
+      left: 40px;
+      bottom: 76px;
+      width: 96px;
+      height: 78px;
+      background: var(--cat);
+      border-radius: 38px 38px 32px 32px;
+      z-index: 3;
+    }
+    .ear { position: absolute; top: -20px; width: 34px; height: 38px; background: var(--cat); clip-path: polygon(50% 0, 100% 100%, 0 100%); }
+    .ear.left { left: 8px; transform: rotate(-14deg); }
+    .ear.right { right: 8px; transform: rotate(14deg); }
+    .ear::after { content:""; position:absolute; left: 10px; top: 13px; width: 14px; height: 18px; background:#ffb6a2; clip-path: polygon(50% 0,100% 100%,0 100%); opacity:.95; }
+
+    .face { position: absolute; inset: 0; }
+    .eye { position: absolute; top: 34px; width: 12px; height: 16px; border-radius: 999px; background: #fff5d6; box-shadow: inset 0 -5px 0 #f8cf5a; transition: height 140ms ease, transform 140ms ease; }
+    .eye.left { left: 27px; }
+    .eye.right { right: 27px; }
+    .cat.typing .eye { height: 10px; transform: translateY(3px); }
+    .pupil { position:absolute; left: 4px; top: 4px; width: 4px; height: 8px; border-radius: 999px; background: #1a1511; }
+    .nose { position: absolute; left: 43px; top: 51px; width: 10px; height: 8px; background: #ff8a9a; clip-path: polygon(50% 100%, 100% 0, 0 0); }
+    .mouth { position:absolute; left: 39px; top: 59px; width: 18px; height: 8px; border-bottom: 2px solid #fff2df; border-radius: 0 0 999px 999px; }
+
+    .tail {
+      position: absolute;
+      left: 132px;
+      bottom: 52px;
+      width: 68px;
+      height: 24px;
+      border: 18px solid var(--cat);
+      border-left: 0;
+      border-bottom: 0;
+      border-radius: 0 46px 0 0;
+      transform-origin: 0 100%;
+      animation: tail-slow 2400ms ease-in-out infinite;
+    }
+    .cat.typing .tail { animation: tail-fast 420ms ease-in-out infinite; }
+    .cat.excited .tail { animation: tail-fast 240ms ease-in-out infinite; }
+
+    .paw { position:absolute; bottom: 0; width: 28px; height: 26px; background: var(--cat-soft); border-radius: 14px 14px 9px 9px; z-index: 4; }
+    .paw.left { left: 57px; }
+    .paw.right { right: 57px; }
+    .cat.typing .paw.left { animation: paw-tap 240ms ease-in-out infinite alternate; }
+    .cat.typing .paw.right { animation: paw-tap 240ms ease-in-out infinite alternate-reverse; }
+
+    .sparkles { position:absolute; inset: 0; pointer-events:none; opacity: 0; }
+    .cat.excited .sparkles { opacity: 1; }
+    .sparkles i { position:absolute; width: 9px; height: 9px; background: var(--accent-2); clip-path: polygon(50% 0, 62% 38%, 100% 50%, 62% 62%, 50% 100%, 38% 62%, 0 50%, 38% 38%); animation: sparkle 820ms ease-in-out infinite; }
+    .sparkles i:nth-child(1) { left: 10px; top: 20px; }
+    .sparkles i:nth-child(2) { right: 4px; top: 34px; animation-delay: 160ms; }
+    .sparkles i:nth-child(3) { left: 126px; top: 6px; animation-delay: 320ms; }
+
+    .keyboard {
+      position: absolute;
+      left: 47px;
+      bottom: -4px;
+      width: 86px;
+      height: 24px;
+      background: #e7dac9;
+      border: 1px solid rgba(38,31,26,.22);
+      border-radius: 8px;
+      z-index: 2;
+      box-shadow: inset 0 -4px 0 rgba(38,31,26,.08);
+    }
+    .keyboard::after { content:""; position:absolute; left:8px; right:8px; top:7px; height: 3px; background: repeating-linear-gradient(90deg, rgba(38,31,26,.28) 0 4px, transparent 4px 9px); }
+
+    .mode-strip {
+      position: relative;
+      z-index: 20;
+      display: flex;
+      gap: 8px;
+      padding: 0 20px 18px;
+      border-top: 1px solid var(--line);
+    }
+    .mode {
+      border: 1px solid var(--line);
+      background: rgba(255,255,255,.42);
+      color: var(--muted);
+      min-height: 36px;
+      border-radius: 999px;
+      padding: 0 12px;
+      font-size: 12px;
+      font-weight: 850;
+      cursor: pointer;
+    }
+    .mode.active { background: var(--ink); color: white; border-color: var(--ink); }
+
+    @keyframes idle-breathe { 0%,100% { transform: translateY(0) scale(1); } 50% { transform: translateY(2px) scale(1.015,.985); } }
+    @keyframes typing-bounce { 0% { transform: translateY(0); } 100% { transform: translateY(4px); } }
+    @keyframes think-sway { 0%,100% { transform: rotate(-2deg); } 50% { transform: rotate(2deg); } }
+    @keyframes excited-hop { 0%,100% { transform: translateY(0) rotate(0deg); } 50% { transform: translateY(-10px) rotate(-2deg); } }
+    @keyframes tail-slow { 0%,100% { transform: rotate(-8deg); } 50% { transform: rotate(12deg); } }
+    @keyframes tail-fast { 0%,100% { transform: rotate(-16deg); } 50% { transform: rotate(22deg); } }
+    @keyframes paw-tap { from { transform: translateY(0); } to { transform: translateY(-8px); } }
+    @keyframes sparkle { 0%,100% { transform: scale(.6) rotate(0deg); opacity:.4; } 50% { transform: scale(1.4) rotate(90deg); opacity:1; } }
+    @keyframes bubble-in { from { transform: translateY(8px) scale(.96); opacity: 0; } to { transform: translateY(0) scale(1); opacity: 1; } }
+
+    @media (max-width: 980px) {
+      body { overflow: auto; }
+      .app { grid-template-columns: 1fr; }
+      .brief, .workspace { min-height: auto; }
+      .screen { grid-template-columns: 1fr; padding-bottom: 220px; }
+      .dock { position: fixed; }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after { animation-duration: 1ms !important; transition-duration: 1ms !important; scroll-behavior: auto !important; }
+    }
+  </style>
+</head>
+<body>
+  <main class="app">
+    <section class="brief card">
+      <div>
+        <p class="eyebrow">TypeCat AI / MVP prototype</p>
+        <h1>A cute cat that reacts before it analyzes.</h1>
+        <p class="subcopy">
+          The wedge is not another serious productivity sidebar. It is a tiny emotional desktop companion: it watches typing activity, mouse proximity, and explicit “ask cat” moments — without reading text unless the user sends it.
+        </p>
+        <div class="promise-grid">
+          <div class="promise"><strong>1. Cute first</strong><span>Idle, typing, thinking, excited, and sleepy states are the first conversion hook.</span></div>
+          <div class="promise"><strong>2. Privacy posture</strong><span>Typing activity can animate the cat. Actual content only enters AI after an explicit click.</span></div>
+          <div class="promise"><strong>3. AI second</strong><span>The cat turns selected text into sharper, kinder, more direct suggestions.</span></div>
+        </div>
+      </div>
+      <div class="controls">
+        <button class="btn" id="demoTyping">Demo typing</button>
+        <button class="btn secondary" id="askCat">Ask cat</button>
+      </div>
+    </section>
+
+    <section class="workspace card" aria-label="TypeCat AI prototype">
+      <div class="topbar">
+        <div class="metric-row"><span class="status-dot"></span><strong id="catMode">idle</strong><span id="catHint">Type in the editor. The cat listens to activity, not content.</span></div>
+        <div class="metric-row"><span><strong id="words">0</strong> words</span><span><strong id="streak">0</strong>s streak</span></div>
+      </div>
+
+      <div class="screen">
+        <div class="editor-wrap">
+          <div class="editor-head"><strong>Draft space</strong><span class="metric-row">Explicit AI area — demo only</span></div>
+          <textarea class="editor" id="editor" placeholder="Start typing a spec, tweet, PR description, journal note, or side-project idea…"></textarea>
+        </div>
+
+        <aside class="ai-panel">
+          <div class="ai-card">
+            <h3>Cat readout</h3>
+            <p id="readout">No content analyzed yet. Type activity only moves the cat.</p>
+          </div>
+          <div class="ai-card">
+            <h3>AI suggestion</h3>
+            <p id="suggestion">Click “Ask cat” to explicitly share the draft with the AI companion.</p>
+          </div>
+          <div class="ai-card">
+            <h3>MVP signals</h3>
+            <ul>
+              <li>Do users smile before asking what it does?</li>
+              <li>Do they ask for Notes / Telegram / Cursor support?</li>
+              <li>Do they want skins, moods, or AI modes?</li>
+            </ul>
+          </div>
+        </aside>
+      </div>
+
+      <div class="dock" aria-live="polite">
+        <div class="bubble" id="bubble">I’m just sitting here. Start typing and I’ll help emotionally first.</div>
+        <div class="cat-stage">
+          <div class="cat-shadow"></div>
+          <div class="cat" id="cat" role="img" aria-label="Animated black desktop cat companion">
+            <div class="tail"></div>
+            <div class="body"></div>
+            <div class="head">
+              <div class="ear left"></div>
+              <div class="ear right"></div>
+              <div class="face">
+                <div class="eye left"><div class="pupil"></div></div>
+                <div class="eye right"><div class="pupil"></div></div>
+                <div class="nose"></div>
+                <div class="mouth"></div>
+              </div>
+            </div>
+            <div class="keyboard"></div>
+            <div class="paw left"></div>
+            <div class="paw right"></div>
+            <div class="sparkles"><i></i><i></i><i></i></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="mode-strip">
+        <button class="mode active" data-mode="idle">Idle</button>
+        <button class="mode" data-mode="typing">Typing</button>
+        <button class="mode" data-mode="thinking">Thinking</button>
+        <button class="mode" data-mode="excited">Excited</button>
+        <button class="mode" data-mode="sleepy">Sleepy</button>
+      </div>
+    </section>
+  </main>
+
+  <script>
+    const cat = document.querySelector('#cat');
+    const bubble = document.querySelector('#bubble');
+    const editor = document.querySelector('#editor');
+    const wordsEl = document.querySelector('#words');
+    const streakEl = document.querySelector('#streak');
+    const modeEl = document.querySelector('#catMode');
+    const hintEl = document.querySelector('#catHint');
+    const readout = document.querySelector('#readout');
+    const suggestion = document.querySelector('#suggestion');
+    const modeButtons = [...document.querySelectorAll('.mode')];
+
+    let typingTimer;
+    let streakTimer;
+    let streak = 0;
+    let currentMode = 'idle';
+
+    const lines = {
+      idle: 'I’m watching the rhythm, not your words.',
+      typing: 'tap tap tap… good momentum. keep going.',
+      thinking: 'Hmm. This sounds like it wants a sharper point.',
+      excited: 'This has launch-post energy. Don’t over-explain it.',
+      sleepy: 'Low energy mode. I’ll blink slowly and keep you company.'
+    };
+
+    function setMode(mode, message = lines[mode]) {
+      currentMode = mode;
+      cat.className = `cat ${mode === 'idle' ? '' : mode}`.trim();
+      bubble.textContent = message;
+      modeEl.textContent = mode;
+      hintEl.textContent = mode === 'typing' ? 'Typing activity detected. Content stays local until Ask cat.' : 'Explicit AI only. The cat can animate without reading content.';
+      modeButtons.forEach(btn => btn.classList.toggle('active', btn.dataset.mode === mode));
+    }
+
+    function updateStats() {
+      const text = editor.value.trim();
+      const words = text ? text.split(/\s+/).length : 0;
+      wordsEl.textContent = words;
+      readout.textContent = words
+        ? `Activity: ${words} words in the draft. No AI analysis has run yet.`
+        : 'No content analyzed yet. Type activity only moves the cat.';
+    }
+
+    editor.addEventListener('input', () => {
+      updateStats();
+      setMode('typing');
+      clearTimeout(typingTimer);
+      typingTimer = setTimeout(() => setMode('idle', 'Nice. I’ll stay quiet until you ask.'), 1100);
+      if (!streakTimer) {
+        streakTimer = setInterval(() => {
+          streak += 1;
+          streakEl.textContent = streak;
+        }, 1000);
+      }
+    });
+
+    editor.addEventListener('blur', () => {
+      clearInterval(streakTimer);
+      streakTimer = null;
+      streak = 0;
+      streakEl.textContent = '0';
+      if (currentMode === 'typing') setMode('idle');
+    });
+
+    document.querySelector('#askCat').addEventListener('click', () => {
+      const text = editor.value.trim();
+      setMode('thinking', 'You clicked Ask cat, so now I can read this draft.');
+      setTimeout(() => {
+        if (!text) {
+          suggestion.textContent = 'Write one messy paragraph first. The cat is better as a polishing companion than a blank-page generator.';
+          setMode('idle', 'Give me something rough. I’ll help shape it.');
+          return;
+        }
+        const words = text.split(/\s+/).length;
+        const hasQuestion = /\?/.test(text);
+        suggestion.textContent = hasQuestion
+          ? `The draft has ${words} words and a question. Make the ask explicit, then add one concrete example so readers can answer fast.`
+          : `The draft has ${words} words. Stronger version: lead with the emotional hook, then one concrete proof point, then a clear ask.`;
+        setMode('excited', 'There is a post in here. Cut one sentence and ship it.');
+      }, 700);
+    });
+
+    document.querySelector('#demoTyping').addEventListener('click', () => {
+      const demo = 'I built a tiny desktop cat that reacts to typing and only reads my text when I explicitly ask. It feels less like another AI sidebar and more like a small emotional companion for writing.';
+      editor.value = '';
+      editor.focus();
+      let i = 0;
+      const tick = setInterval(() => {
+        editor.value += demo[i] || '';
+        editor.dispatchEvent(new Event('input'));
+        i += 1;
+        if (i >= demo.length) clearInterval(tick);
+      }, 24);
+    });
+
+    modeButtons.forEach(btn => btn.addEventListener('click', () => setMode(btn.dataset.mode)));
+
+    window.addEventListener('mousemove', (event) => {
+      const rect = cat.getBoundingClientRect();
+      const cx = rect.left + rect.width / 2;
+      const cy = rect.top + rect.height / 2;
+      const dx = Math.max(-10, Math.min(10, (event.clientX - cx) / 20));
+      const dy = Math.max(-5, Math.min(5, (event.clientY - cy) / 35));
+      document.querySelectorAll('.pupil').forEach(pupil => {
+        pupil.style.transform = `translate(${dx}px, ${dy}px)`;
+      });
+    });
+
+    updateStats();
+  </script>
+</body>
+</html>

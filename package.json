@@ -1,0 +1,12 @@
+{
+  "name": "typecat-ai-mvp",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Cute typing companion MVP: a cat that reacts to writing and offers explicit AI help.",
+  "scripts": {
+    "dev": "python3 -m http.server 4177 --bind 127.0.0.1",
+    "preview": "python3 -m http.server 4177 --bind 127.0.0.1",
+    "check": "node --check scripts/smoke.mjs && node scripts/smoke.mjs"
+  },
+  "devDependencies": {}
+}
